@@ -1,6 +1,14 @@
-﻿namespace SearchService.RequestHelpers;
+﻿using AutoMapper;
+using Contracts;
+using SearchService.Models;
 
-public class MappingProfiles
+namespace SearchService.RequestHelpers;
+
+public class MappingProfiles: Profile
 {
-    
+    public MappingProfiles()
+    {
+        CreateMap<AuctionCreated, Item>();
+        CreateMap<AuctionUpdated, Item>();
+    }
 }
