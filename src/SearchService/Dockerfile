@@ -1,24 +1,23 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
+﻿FROM mcr.microsoft.com/dotnet/sdk:8.0 as build
 WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
+EXPOSE 80
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
-COPY ["src/SearchService/SearchService.csproj", "src/SearchService/"]
-COPY ["src/Contracts/Contracts.csproj", "src/Contracts/"]
-RUN dotnet restore "src/SearchService/SearchService.csproj"
-COPY . .
-WORKDIR "/src/src/SearchService"
-RUN dotnet build "SearchService.csproj" -c $BUILD_CONFIGURATION -o /app/build
+COPY Carsties.sln Carsties.sln
+COPY src/AuctionService/AuctionService.csproj src/AuctionService/AuctionService.csproj
+COPY src/SearchService/SearchService.csproj src/SearchService/SearchService.csproj
+COPY src/GatewayService/GatewayService.csproj src/GatewayService/GatewayService.csproj
+COPY src/Contracts/Contracts.csproj src/Contracts/Contracts.csproj
+COPY src/IdentityService/IdentityService.csproj src/IdentityService/IdentityService.csproj
 
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "SearchService.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet restore Carsties.sln
 
-FROM base AS final
+COPY src/SearchService src/SearchService
+COPY src/Contracts src/Contracts
+WORKDIR /app/src/SearchService
+RUN dotnet publish -c Release -o /app/src/out
+
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /app/src/out .
 ENTRYPOINT ["dotnet", "SearchService.dll"]
